@@ -1,9 +1,11 @@
 package apiclient
 
 import (
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"reflect"
 	"testing"
 )
 
@@ -22,7 +24,7 @@ func setup() {
 	server = httptest.NewServer(mux)
 
 	// api client configured to use test server
-	client = NewClient(nil)
+	client = NewClient("foo", "bar")
 	url, _ := url.Parse(server.URL)
 	client.BaseURL = url
 }
@@ -33,9 +35,60 @@ func teardown() {
 }
 
 func TestNewClient(t *testing.T) {
-	c := NewClient(nil)
+	c := NewClient("user", "password")
+
+	if got, want := c.client, http.DefaultClient; got != want {
+		t.Errorf("NewClient client = %v, want %v", got, want)
+	}
 
 	if got, want := c.BaseURL.String(), defaultBaseURL; got != want {
 		t.Errorf("NewClient BaseURL is %v, want %v", got, want)
+	}
+
+	if got, want := c.User, "user"; got != want {
+		t.Errorf("NewClient User is %v, want %v", got, want)
+	}
+}
+
+func TestNewRequest(t *testing.T) {
+	setup()
+	defer teardown()
+
+	req, err := client.NewRequest("GET", "/checks", nil)
+	if err != nil {
+		t.Errorf("NewRequest returned error: %v", err)
+	}
+
+	if got, want := req.Method, "GET"; got != want {
+		t.Errorf("NewRequest Method returned %+v, want %+v", got, want)
+	}
+
+	if got, want := req.URL.String(), client.BaseURL.String()+"/checks"; got != want {
+		t.Errorf("NewRequest URL returned %+v, want %+v", got, want)
+	}
+}
+
+func TestDo(t *testing.T) {
+	setup()
+	defer teardown()
+
+	type foo struct {
+		A string
+	}
+
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		if got, want := r.Method, "GET"; got != want {
+			t.Errorf("Request method = %v, want %v", got, want)
+		}
+		fmt.Fprint(w, `{"A":"a"}`)
+	})
+
+	req, _ := client.NewRequest("GET", "/", nil)
+	body := new(foo)
+	client.Do(req, body)
+
+	want := &foo{"a"}
+	if !reflect.DeepEqual(body, want) {
+		t.Errorf("Response body = %v, want %v", body, want)
 	}
 }
