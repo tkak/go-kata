@@ -13,17 +13,17 @@ const (
 	defaultBaseURL = "https://api.example.com/"
 )
 
-type ExampleError struct {
+type APIError struct {
 	StatusCode int    `json:"statuscode"`
 	StatusDesc string `json:"statusdesc"`
 	Message    string `json:"errormessage"`
 }
 
 type errorJsonResponse struct {
-	Error *ExampleError `json:"error"`
+	Error *APIError `json:"error"`
 }
 
-func (r *ExampleError) Error() string {
+func (r *APIError) Error() string {
 	return fmt.Sprintf("%d %v: %v", r.StatusCode, r.StatusDesc, r.Message)
 }
 
@@ -35,8 +35,8 @@ type Client struct {
 }
 
 func NewClient(user, password string) *Client {
-
 	baseURL, _ := url.Parse(defaultBaseURL)
+
 	c := &Client{
 		client:   http.DefaultClient,
 		BaseURL:  baseURL,
@@ -63,12 +63,14 @@ func (c *Client) NewRequest(method string, rsc string, params map[string]string)
 
 	req, err := http.NewRequest(method, baseUrl.String(), nil)
 	req.SetBasicAuth(c.User, c.Password)
+
 	return req, err
 }
 
 func (c *Client) Do(req *http.Request, v interface{}) (*http.Response, error) {
 	resp, err := c.client.Do(req)
 	defer resp.Body.Close()
+
 	if err != nil {
 		return nil, err
 	}
@@ -78,8 +80,8 @@ func (c *Client) Do(req *http.Request, v interface{}) (*http.Response, error) {
 	}
 
 	err = decodeResponse(resp, v)
-	return resp, err
 
+	return resp, err
 }
 
 func decodeResponse(r *http.Response, v interface{}) error {
@@ -90,6 +92,7 @@ func decodeResponse(r *http.Response, v interface{}) error {
 	bodyBytes, _ := ioutil.ReadAll(r.Body)
 	bodyString := string(bodyBytes)
 	err := json.Unmarshal([]byte(bodyString), &v)
+
 	return err
 }
 
