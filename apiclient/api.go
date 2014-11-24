@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	defaultBaseURL = "https://api.example.com/"
+	defaultBaseURL = "https://api.example.com/api"
 )
 
 type APIError struct {
@@ -30,8 +30,8 @@ func (r *APIError) Error() string {
 type Client struct {
 	User     string
 	Password string
-	client   *http.Client
 	BaseURL  *url.URL
+	client   *http.Client
 }
 
 func NewClient(user, password string) *Client {

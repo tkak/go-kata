@@ -76,14 +76,14 @@ func TestDo(t *testing.T) {
 		A string
 	}
 
-	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/foo", func(w http.ResponseWriter, r *http.Request) {
 		if got, want := r.Method, "GET"; got != want {
 			t.Errorf("Request method = %v, want %v", got, want)
 		}
 		fmt.Fprint(w, `{"A":"a"}`)
 	})
 
-	req, _ := client.NewRequest("GET", "/", nil)
+	req, _ := client.NewRequest("GET", "/foo", nil)
 	body := new(foo)
 	client.Do(req, body)
 
